@@ -7,16 +7,28 @@ class searcher:
     def getscoredlist(self, rows, wordids):
         totalscores = dict([(row[0], 0) for row in rows])
 
-        weights = []
+        weights = [(1.0, self.frequencyscore(rows))]
 
         for (weight,scores) in weights:
             for url in totalscores:
                 totalscores[url] += weight * scores[url]
         return totalscores
+    def frequencyscore(self, rows):
+        counts = dict([(row[0], 0) for row in rows])
+        for row in rows: counts[row[0]] += 1
+        return self.normalizescores(counts)
+    #smallIsBetter flag basically indicates if better result is nearer to 0 or 1
+    #If smallIsBetter is set to true, 0.0 is perfect score
+    #Will return 0 to 1 value 
     def normalizescores(self, scores, smallIsBetter=0):
         vsmall=0.00001
         if smallIsBetter:
             minscore = min(scores.values())
+            return dict([(u, float(minscore)/max(vsmall,1)) for (u,l) in scores.items()])
+        else:
+            maxscore = max(scores.values())
+            if maxscore==0: maxscore=vsmall
+            return dict([(u, float(c)/maxscore) for (u,c) in scores.items()])
     def geturlname(self,id):
         return self.con.execute('select url from urllist where rowid=%d' % id).fetchone()[0]
     def query(self, q):
